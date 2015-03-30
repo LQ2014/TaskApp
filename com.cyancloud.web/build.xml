@@ -1,0 +1,309 @@
+<?xml version="1.0"?>
+
+<project name="com.cyancloud.web" basedir="." default="deploy">
+	<property file="build.properties" />
+	<property file="war/WEB-INF/conf/jdbc.properties" />
+
+	<property name="bin.dir" value="webbin" />
+	<property name="resource.dir" value="resources" />
+	<property name="report.dir" value="resources/report" />
+	<property name="sql.dir" value="resources/sql" />
+	<property name="src.dir" value="src" />
+	<property name="test.dir" value="test" />
+	<property name="dist.dir" value="dist" />
+	<property name="docs.dir" value="${dist.dir}/docs" />
+	<property name="web.dir" value="war" />
+	<property name="jsp.dir" value="war/WEB-INF/jsp" />
+	<property name="build.dir" value="${web.dir}/WEB-INF/classes" />
+	<property name="lib.dir" value="${web.dir}/WEB-INF/lib" />
+	<property name="name" value="cyancloud" />
+	<property name="jar.name" value="com.cyancloud.web" />
+	<property name="war.name" value="cloud" />
+	<property name="name.cn" value="事务追踪系统" />
+
+	<path id="master-classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
+		<pathelement path="${build.dir}" />
+	</path>
+
+	<path id="master-sourcepath">
+		<pathelement path="${src.dir}/model" />
+		<pathelement path="${src.dir}/dao" />
+		<pathelement path="${src.dir}/service" />
+		<pathelement path="${src.dir}/web" />
+	</path>
+
+	<path id="master-testpath">
+		<pathelement path="${test.dir}/model" />
+		<pathelement path="${test.dir}/dao" />
+		<pathelement path="${test.dir}/service" />
+		<pathelement path="${test.dir}/web" />
+	</path>
+
+	<target name="build" description="Compile main source tree java files">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" debug="true" debuglevel="lines,source" compiler="javac1.6" encoding="utf-8">
+			<src refid="master-sourcepath" />
+			<classpath refid="master-classpath" />
+		</javac>
+		<copy todir="${build.dir}" preservelastmodified="true">
+			<fileset dir="${src.dir}/model">
+				<exclude name="**/*.java" />
+			</fileset>
+			<fileset dir="${src.dir}/dao">
+				<exclude name="**/*.java" />
+			</fileset>
+			<fileset dir="${src.dir}/service">
+				<exclude name="**/*.java" />
+			</fileset>
+			<fileset dir="${src.dir}/web">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		<!--
+		<native2ascii src="resources/messages" dest="${build.dir}" encoding="utf-8">
+			<include name="*.properties" />
+		</native2ascii>
+		-->
+	</target>
+
+	<target name="build-test" depends="build" description="Compile test source tree java files">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" debug="true" debuglevel="lines,source" compiler="javac1.6" encoding="utf-8">
+			<src refid="master-testpath" />
+			<classpath refid="master-classpath" />
+		</javac>
+		<copy todir="${build.dir}" preservelastmodified="true">
+			<fileset dir="${test.dir}/dao">
+				<exclude name="**/*.java" />
+			</fileset>
+			<fileset dir="${test.dir}/manager">
+				<exclude name="**/*.java" />
+			</fileset>
+			<fileset dir="${test.dir}/web">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="docs" description="Create complete Javadoc documentation">
+		<delete dir="${docs.dir}" />
+		<mkdir dir="${docs.dir}" />
+		<javadoc sourcepathref="master-sourcepath" destdir="${docs.dir}" windowtitle="${name.cn}" encoding="utf-8" source="1.6" author="true" version="true" use="true" packagenames="*">
+			<doctitle>
+				<![CDATA[<h1>${name.cn}</h1>]]></doctitle>
+		<bottom>
+			<![CDATA[<i>XXXXXX工作室</i>]]></bottom>
+	<classpath refid="master-classpath" />
+</javadoc>
+</target>
+
+<target name="jsp-2" description="conver jsp to jsp2 ">
+<echo level="info">Removing JSTL's c:out tags</echo>
+<replaceregexp flags="g">
+	<regexp pattern='&lt;c:out value="([^"]*)"/&gt;' />
+			<substitution expression="\1" />
+			<fileset dir="${jsp.dir}" includes="**/*.jsp" />
+		</replaceregexp>
+	</target>
+
+	<target name="jarSrc-clean" depends="clean" description="Jar the src">
+		<antcall target="jarSrc" />
+	</target>
+
+	<target name="jarSrc" depends="build" description="Jar the src">
+		<jar destfile="${lib.dir}/${jar.name}.jar">
+			<fileset dir="${build.dir}">
+				<include name="**/*" />
+				<exclude name="*.*" />
+			</fileset>
+		</jar>
+		<copy todir="${dist.dir}" overwrite="true">
+			<fileset dir="${lib.dir}">
+				<include name="${jar.name}.jar" />
+			</fileset>
+		</copy>
+		<echo level="info">jar the src success.</echo>
+	</target>
+
+	<target name="deploy" depends="build" description="Deploy application">
+		<copy todir="${deploy.path}/${name}" overwrite="${overwrite}">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="data/mq/**" />
+				<exclude name="logs/*" />
+			</fileset>
+		</copy>
+		<copy todir="${deploy.path}/${name}/WEB-INF/lib" preservelastmodified="true">
+			<fileset dir="${dist.dir}">
+				<include name="**/*.jar" />
+			</fileset>
+			</copy>
+	</target>
+	
+	<target name="run_deploy" description="run_deploy">
+		<copy todir="${deploy.path}/${name}/WEB-INF/jsp" overwrite="true"> 
+			<fileset dir="${jsp.dir}"> 
+				<include name="**/*.*"/> 
+			</fileset> 
+		</copy>
+		<copy todir="${deploy.path}/${name}/js" overwrite="true"> 
+			<fileset dir="${web.dir}/js"> 
+				<include name="**/*.*"/> 
+			</fileset> 
+		</copy>
+		<copy todir="${deploy.path}/${name}/css" overwrite="true"> 
+			<fileset dir="${web.dir}/css"> 
+				<include name="**/*.*"/> 
+			</fileset> 
+		</copy>
+		<copy todir="${deploy.path}/${name}/images" overwrite="true"> 
+			<fileset dir="${web.dir}/images"> 
+				<include name="**/*.*"/> 
+			</fileset> 
+		</copy>
+		<copy todir="${deploy.path}/${name}/WEB-INF/classes" overwrite="true"> 
+			<fileset dir="${build.dir}"> 
+				<include name="**/*.*"/> 
+			</fileset> 
+		</copy>
+	</target>
+	
+	<target name="clean-deploy" depends="clean,deploy" description="Clean and Deploy">
+	</target>
+
+	<target name="publishBin" depends="jarSrc-clean" description="publish the application">
+		<delete includeEmptyDirs="true">
+			<fileset dir="${build.dir}">
+				<include name="**/*" />
+				<exclude name="*.*" />
+			</fileset>
+		</delete>
+		
+		<mkdir dir="${bin.dir}" />
+		
+		<copy todir="${bin.dir}" overwrite="true">
+			<fileset dir="${web.dir}">
+				<exclude name="logs/*" />
+				<exclude name="data/mq/**" />
+			</fileset>
+		</copy>
+		
+		<war destfile="${dist.dir}/${war.name}.war" webxml="${bin.dir}/WEB-INF/web.xml">
+			<fileset dir="${bin.dir}">
+				<include name="**/*.*" />
+				<exclude name="WEB-INF/web.xml" />
+			</fileset>
+		</war>
+		<delete includeEmptyDirs="true">
+			<fileset dir="${bin.dir}">
+				<include name="**/*" />
+			</fileset>
+		</delete>
+		<echo level="info">Publish the ${dist.dir}/${name}.war (bin) success^_^</echo>
+	</target>
+
+	<target name="publishSrc" description="publish the src">
+		<antcall target="clean">
+		</antcall>
+		<zip destfile="${dist.dir}/${name}-src.zip">
+			<fileset dir="${src.dir}/model" includes="**/**" />
+			<fileset dir="${src.dir}/web" includes="**/**" />
+			<fileset dir="${src.dir}/service" includes="**/**" />
+			<fileset dir="${src.dir}/dao" includes="**/**" />
+		</zip>
+		<zip destfile="${dist.dir}/${name}-total.zip">
+			<fileset dir="." includes="${src.dir}/**" />
+			<fileset dir="." includes="${test.dir}/**" />
+			<fileset dir=".">
+				<include name="${web.dir}/**" />
+				<exclude name="${web.dir}/data/mq/**" />
+				<exclude name="${web.dir}/logs/*" />
+			</fileset>
+			<fileset dir="." includes="${resource.dir}/**" />
+			<fileset dir="." includes=".settings/**" />
+			<fileset dir="." includes="*.*" />
+		</zip>
+		<echo level="info">Publish the ${dist.dir}/${name}-src.zip (src) success^_^</echo>
+	</target>
+
+	<target name="dist" depends="publishBin,publishSrc" description="Distribute the project!">
+		<echo level="info">Distribute the ${name} success</echo>
+	</target>
+
+	<target name="clean" description="Clean output directories">
+		<delete includeEmptyDirs="true">
+			<fileset dir="${build.dir}">
+				<include name="**/*" />
+				<exclude name="*.*" />
+			</fileset>
+		</delete>
+		<delete includeEmptyDirs="true">
+			<fileset dir="${lib.dir}">
+				<include name="${name}.jar" />
+			</fileset>
+		</delete>
+		<echo level="info">Clean the project success</echo>
+	</target>
+
+	<target name="undeploy" description="Un-Deploy application">
+		<delete includeEmptyDirs="true">
+			<fileset dir="${deploy.path}/${name}">
+				<include name="**/*" />
+			</fileset>
+		</delete>
+	</target>
+	
+	<target name="junit" depends="build-test">
+			<mkdir dir="${report.dir}" />
+			<junit printsummary="on" fork="true" showoutput="true">
+				<classpath refid="master-classpath" />
+				<formatter type="xml" />
+				<batchtest todir="${report.dir}">
+					<fileset dir="${build.dir}">
+						<include name="**/SearchAllSuite.*" />
+					</fileset>
+				</batchtest>
+			</junit>
+			<junitreport todir="${report.dir}">
+				<fileset dir="${report.dir}">
+					<include name="TEST-*.xml" />
+				</fileset>
+				<report format="frames" todir="${report.dir}" />
+			</junitreport>
+		</target>
+	<!--
+	<taskdef name="dbunit" classname="org.dbunit.ant.DbUnitTask" classpathref="master-classpath" />
+	-->
+	<target name="db-export" description="Exports the current data in the database">
+		<dbunit driver="${jdbc.driverClassName}" url="${jdbc.url}" userid="${jdbc.username}" password="${jdbc.password}" schema="xhecc">
+			<export dest="${sql.dir}/system_info.xml" format="xml">
+				<table name="system_info" />
+			</export>
+			<export dest="${sql.dir}/sys_column.xml" format="xml">
+				<table name="sys_column" />
+			</export>
+			<export dest="${sql.dir}/user_role.xml" format="xml">
+				<table name="role" />
+				<table name="sys_user" />
+			</export>
+			<export dest="${sql.dir}/severity.xml" format="xml">
+				<table name="severity" />
+			</export>
+		</dbunit>
+	</target>
+	
+	<target name="db-load" description="Loads the database with sample data">
+		<!-- Conditionally change operation based on whether database is mssql -->
+		<condition property="operation" value="MSSQL_CLEAN_INSERT" else="CLEAN_INSERT">
+			<equals arg1="${database.type}" arg2="sqlserver" />
+		</condition>
+		<dbunit driver="${jdbc.driverClassName}" supportBatchStatement="false" url="${jdbc.url}" userid="${jdbc.username}" password="${jdbc.password}" schema="${jdbc.schema}">
+	        <operation type="${operation}" src="${sql.dir}/syscolumn.xml" format="xml" />
+	    </dbunit>
+	</target>
+	
+</project>

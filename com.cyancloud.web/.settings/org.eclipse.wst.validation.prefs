@@ -1,0 +1,10 @@
+#Tue Nov 25 16:52:20 CST 2014
+DELEGATES_PREFERENCE=delegateValidatorList
+USER_BUILD_PREFERENCE=enabledBuildValidatorList
+USER_MANUAL_PREFERENCE=enabledManualValidatorList
+USER_PREFERENCE=overrideGlobalPreferencestruedisableAllValidationfalseversion1.2.200.me201103162335
+eclipse.preferences.version=1
+override=true
+suspend=false
+vals/org.eclipse.wst.html.ui.HTMLValidator/global=TF01
+vf.version=3

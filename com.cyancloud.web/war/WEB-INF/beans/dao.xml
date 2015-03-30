@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	<bean id="baseDao" class="com.cyancloud.commons.dao.hibernate.BaseDaoHibernate"
+		abstract="true">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<bean id="accountDao" class="com.cyancloud.dao.hbm.AccountDaoHbm"
+		parent="baseDao" />
+	<bean id="unitDao" class="com.cyancloud.dao.hbm.UnitDaoHbm"
+		parent="baseDao" />		
+	<bean id="roleDao" class="com.cyancloud.dao.hbm.RoleDaoHbm"
+		parent="baseDao" />			
+	<bean id="systemLogDao" class="com.cyancloud.dao.hbm.LogDaoHbm"
+		parent="baseDao" />
+	<bean id="rightDao" class="com.cyancloud.dao.hbm.RightDaoHbm"
+		parent="baseDao" />		
+	<bean id="role2rightDao" class="com.cyancloud.dao.hbm.Role2RightDaoHbm"
+		parent="baseDao" />	
+	<bean id="account2RoleDao" class="com.cyancloud.dao.hbm.Account2RoleDaoHbm"
+		parent="baseDao" />	
+	<bean id="account2UnitDao" class="com.cyancloud.dao.hbm.Account2UnitDaoHbm"
+		parent="baseDao" />		
+	<bean id="contactsDao" class="com.cyancloud.dao.hbm.ContactsDaoHbm"
+		parent="baseDao" />	
+	<bean id="employeeDao" class="com.cyancloud.dao.hbm.EmployeeDaoHbm"
+		parent="baseDao" />		
+	<bean id="configDao" class="com.cyancloud.dao.hbm.ConfigDaoHbm"
+		parent="baseDao" />	
+	<bean id="noticeDao" class="com.cyancloud.dao.hbm.NoticeDaoHbm"
+		parent="baseDao" />	
+	<bean id="enumConstDao" class="com.cyancloud.dao.hbm.EnumConstDaoHbm"
+		parent="baseDao" />		
+	<bean id="taskInfoDao" class="com.cyancloud.dao.hbm.TaskInfoDaoHbm" 
+		parent="baseDao" />
+	<bean id="taskForwardDao" class="com.cyancloud.dao.hbm.TaskForwardDaoHbm"
+		parent="baseDao" />
+	<bean id="taskEvaluationDao" class="com.cyancloud.dao.hbm.TaskEvaluationDaoHbm"
+		parent="baseDao" />
+	<bean id="taskCopyDao" class="com.cyancloud.dao.hbm.TaskCopyDaoHbm"
+		parent="baseDao" />
+	<bean id="taskConsultDao" class="com.cyancloud.dao.hbm.TaskConsultDaoHbm"
+		parent="baseDao" />
+	<bean id="taskApplayDao" class="com.cyancloud.dao.hbm.TaskApplayDaoHbm"
+		parent="baseDao" />
+</beans>

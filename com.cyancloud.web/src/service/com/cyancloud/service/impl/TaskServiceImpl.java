@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.cyancloud.dao.EmployeeDao;
+import com.cyancloud.dao.NoticeDao;
 import com.cyancloud.dao.TaskApplayDao;
 import com.cyancloud.dao.TaskConsultDao;
 import com.cyancloud.dao.TaskCopyDao;
@@ -26,6 +27,7 @@ import com.cyancloud.model.task.TaskEvaluation;
 import com.cyancloud.model.task.TaskForward;
 import com.cyancloud.model.task.TaskInfo;
 import com.cyancloud.service.TaskService;
+import com.cyancloud.service.model.NoticeBean;
 import com.cyancloud.service.model.UnitBean;
 import com.cyancloud.web.util.CloudConstant;
 import com.cyancloud.web.util.EnumConstUtil;
@@ -58,6 +60,9 @@ public class TaskServiceImpl implements TaskService {
 	
 	@Autowired
 	private UnitDao unitDao;
+	
+	@Autowired
+	private NoticeDao noticeDao;
 
 	@Override
 	public Map<String, Object> issued(TaskInfo taskInfo) {
@@ -323,5 +328,22 @@ public class TaskServiceImpl implements TaskService {
 	@Override
 	public List<TaskCopy> searchCopyTask(Long uid) {
 		return this.copyDao.searchCopyTask(uid);
+	}
+
+	@Override
+	public Map<String, Object> searchNotice(Long uid, Long departmentId) {
+		Map map = new HashMap();
+		map.put(CloudConstant.SUCCESS, Boolean.valueOf(true));
+		map.put(CloudConstant.MESSAGE, "查询成功");
+		List<NoticeBean> listNotice = null;
+		try {
+			listNotice = noticeDao.searchNotice(uid,departmentId);
+		} catch (Exception e) {
+			e.printStackTrace();
+			map.put(CloudConstant.SUCCESS, Boolean.valueOf(false));
+			map.put(CloudConstant.MESSAGE, "查询失败");
+		}
+		map.put("listNotice", listNotice);
+		return map;
 	}
 }

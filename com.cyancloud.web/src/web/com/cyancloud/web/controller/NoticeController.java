@@ -113,12 +113,4 @@ public class NoticeController extends BaseAbstractController {
 		return "redirect:/notice/listNotice.do";
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
 }

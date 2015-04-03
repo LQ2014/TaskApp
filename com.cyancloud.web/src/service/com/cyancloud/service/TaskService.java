@@ -106,4 +106,6 @@ public interface TaskService {
 	public void copyTask(TaskCopy taskCopy);
 
 	public List<TaskCopy> searchCopyTask(Long uid);
+
+	public Map<String, Object> searchNotice(Long uid, Long departmentId);
 }

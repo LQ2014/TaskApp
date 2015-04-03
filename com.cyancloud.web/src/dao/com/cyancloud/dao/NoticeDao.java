@@ -14,4 +14,6 @@ public interface NoticeDao extends AbstractDao<Notice>{
 
 	public List<NoticeBean> queryListByAccount(Account account);
 
+	public List<NoticeBean> searchNotice(Long uid, Long departmentId);
+
 }

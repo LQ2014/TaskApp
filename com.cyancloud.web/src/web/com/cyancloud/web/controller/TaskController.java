@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.cyancloud.commons.web.BaseAbstractController;
 import com.cyancloud.commons.web.SessionAttributeNames;
 import com.cyancloud.model.system.Account;
+import com.cyancloud.model.system.Employee;
 import com.cyancloud.model.task.TaskCopy;
 import com.cyancloud.model.task.TaskEvaluation;
 import com.cyancloud.model.task.TaskForward;
@@ -62,8 +64,27 @@ public class TaskController extends BaseAbstractController {
 			map.put("message", "不存在该用户");
 			return map;
 		}
-		if (!account.getPassword().equals(accountModel.getPassword())) {
+		if (!accountModel.getPassword().equals(account.getPassword())) {
 			map.put("message", "用户密码错误");
+			return map;
+		}
+		// 移除token
+		String[] tokens = CloudConstant.TOKENS.keySet().toArray(new String[]{});
+		for (String token : tokens) {
+			Account acc = (Account) CloudConstant.TOKENS.get(token);
+			if (null != acc && accountModel.getUcode().equals(acc.getUcode())) {
+				CloudConstant.TOKENS.remove(token);
+			}
+		}
+		String uuid = UUID.randomUUID().toString().toUpperCase().replace("-", "");
+		CloudConstant.TOKENS.put(uuid, account);
+		Employee employee = aclService.getEmployeeById(account.getEmployeeId());
+		Long employeeid = null;
+		if (null != employee) {
+			employeeid = employee.getId();
+		}
+		if (null == employeeid) {
+			map.put("message", "用户关联的员工不存在");
 			return map;
 		}
 		SessionAttributeNames.setSessionAttribute(request, "ucode",
@@ -71,13 +92,17 @@ public class TaskController extends BaseAbstractController {
 		SessionAttributeNames.setSessionAttribute(request, "uid", account
 				.getId().toString());
 		map.put("message", "登录成功");
+		map.put("token", uuid);
+		map.put("uid", employeeid);
+		map.put("unitId", account.getUnitId() == null ? "" : account.getUnitId());
 		map.put("success", Boolean.valueOf(true));
 		return map;
 	}
 
 	@RequestMapping("/logout.do")
 	@ResponseBody
-	public Object logout(@RequestParam(value="ucode", required=false) String ucode,HttpServletRequest request,
+	public Object logout(@RequestParam(value="loginid", required=false) String loginid, 
+			@RequestParam(value="ucode", required=false) String ucode,HttpServletRequest request,
 			HttpServletResponse response) {
 		Map map = new HashMap();
 		map.put("success", Boolean.valueOf(false));
@@ -86,6 +111,7 @@ public class TaskController extends BaseAbstractController {
 			return map;
 		}
 		try {
+			CloudConstant.TOKENS.remove(loginid);
 			SessionAttributeNames.removeSessionAttribute(request);
 			map.put("success", Boolean.valueOf(true));
 			return map;
@@ -139,12 +165,12 @@ public class TaskController extends BaseAbstractController {
 	
 	@RequestMapping("/getForwardTask.do")
 	@ResponseBody
-	public Object getForwardTask(@RequestParam(value="unitId",required=false) Long unitId, @RequestParam(value="employeeId",required=false) Long employeeId,
+	public Object getForwardTask(@RequestParam(value="unitId",required=false) Long unitId, @RequestParam(value="uid",required=false) Long uid,
 			HttpServletRequest request, HttpServletResponse response) {
 		Map map = new HashMap();
 		List<TaskForward> listForwardTask = new ArrayList<TaskForward>();
 		try {
-			listForwardTask = this.taskService.searchForwardTask(unitId,employeeId);
+			listForwardTask = this.taskService.searchForwardTask(unitId,uid);
 			map.put(CloudConstant.MESSAGE, "查询成功");
 			map.put(CloudConstant.SUCCESS, Boolean.valueOf(true));
 		} catch (Exception e) {
@@ -279,6 +305,21 @@ public class TaskController extends BaseAbstractController {
 		}
 		return result;
 	}
+	
+	@RequestMapping("/getNotice.do")
+	@ResponseBody
+	public Object getNotice(@RequestParam Long uid, @RequestParam Long departmentId,
+			HttpServletRequest request, HttpServletResponse response) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		try {
+			result = taskService.searchNotice(uid,departmentId);
+		} catch (Throwable e) {
+			setError(result, e.getMessage());
+		}
+		return result;
+	}
+	
+	
 	
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {

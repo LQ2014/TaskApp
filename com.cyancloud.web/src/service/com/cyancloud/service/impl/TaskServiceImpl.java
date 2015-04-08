@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,16 +21,22 @@ import com.cyancloud.dao.TaskEvaluationDao;
 import com.cyancloud.dao.TaskForwardDao;
 import com.cyancloud.dao.TaskInfoDao;
 import com.cyancloud.dao.UnitDao;
+import com.cyancloud.model.notice.Notice;
+import com.cyancloud.model.system.Account;
 import com.cyancloud.model.system.Employee;
+import com.cyancloud.model.system.EnumConst;
 import com.cyancloud.model.system.Unit;
 import com.cyancloud.model.task.TaskCopy;
 import com.cyancloud.model.task.TaskEvaluation;
 import com.cyancloud.model.task.TaskForward;
 import com.cyancloud.model.task.TaskInfo;
+import com.cyancloud.service.AclService;
+import com.cyancloud.service.EnumConstService;
 import com.cyancloud.service.TaskService;
 import com.cyancloud.service.model.NoticeBean;
 import com.cyancloud.service.model.UnitBean;
 import com.cyancloud.web.util.CloudConstant;
+import com.cyancloud.web.util.CommonUtils;
 import com.cyancloud.web.util.EnumConstUtil;
 
 @Service("taskService")
@@ -63,6 +70,13 @@ public class TaskServiceImpl implements TaskService {
 	
 	@Autowired
 	private NoticeDao noticeDao;
+	
+	@Autowired
+	private AclService aclService;
+	
+	@Autowired
+	private EnumConstService enumConstService;
+	
 
 	@Override
 	public Map<String, Object> issued(TaskInfo taskInfo) {
@@ -344,6 +358,66 @@ public class TaskServiceImpl implements TaskService {
 			map.put(CloudConstant.MESSAGE, "查询失败");
 		}
 		map.put("listNotice", listNotice);
+		return map;
+	}
+
+	@Override
+	public Map<String, Object> publishNotice(Map<String, String> paramsMap) throws Exception {
+		String unitIds = paramsMap.get("unitIds");
+		String employeeIds = paramsMap.get("employeeIds");
+		String title = paramsMap.get("title");
+		String content = paramsMap.get("content");
+		String flagIsPublished = paramsMap.get("flagIsPublished");
+		String sql = "";
+		Map map = new HashMap();
+		if(unitIds==null && StringUtils.isEmpty(unitIds)&& employeeIds==null && StringUtils.isEmpty(employeeIds)){
+			map.put(CloudConstant.SUCCESS, Boolean.valueOf(false));
+			map.put(CloudConstant.MESSAGE, "未选择发布的部门或者人员");
+			return map;
+		}
+		if(title==null || StringUtils.isEmpty(title)){
+			map.put(CloudConstant.SUCCESS, Boolean.valueOf(false));
+			map.put(CloudConstant.MESSAGE, "通知标题为空");
+			return map;
+		}
+		if(content==null || StringUtils.isEmpty(content)){
+			map.put(CloudConstant.SUCCESS, Boolean.valueOf(false));
+			map.put(CloudConstant.MESSAGE, "通知内容为空");
+			return map;
+		}
+		String ucode = paramsMap.get("ucode");
+		Account user = aclService.getAccountByUcode(ucode);
+		EnumConst enumConstIsPublished = enumConstService.getEnumConstByNamespaceAndCode("FLAG_IsPublish", (flagIsPublished.equals("true") ? "1" : "0"));
+		Notice notice = new Notice();
+		notice.setPublisher(user);
+		notice.setContent(content);
+		notice.setTitle(title);
+		notice.setEnumConstByflagIsPublished(enumConstIsPublished);
+		notice.setInputDate(new Date());
+		notice.setCreateDate(new Date());
+		noticeDao.save(notice);
+		if(unitIds!=null && !StringUtils.isEmpty(unitIds)){
+			String[] departmentIds = unitIds.split(",");
+			sql = "insert into t_res_notice_unit(id,fk_notice_id,fk_unit_id)values  ";
+			for (int i = 0; i < departmentIds.length; i++) {
+				String departmentId = departmentIds[i];
+				sql += "('"+CommonUtils.getUUID()+"','"+notice.getId()+"','"+departmentId+"'),";
+			}
+			sql = sql.substring(0,sql.lastIndexOf(","));
+			noticeDao.executeSql(sql,null);
+		}
+		if(employeeIds!=null && !StringUtils.isEmpty(employeeIds)){
+			String[] accountIds = employeeIds.split(",");
+			sql = "insert into t_res_notice_employee(id,fk_notice_id,fk_employee_id)values  ";
+			for (int i = 0; i < accountIds.length; i++) {
+				String accountId = accountIds[i];
+				sql += "('"+CommonUtils.getUUID()+"','"+notice.getId()+"','"+accountId+"'),";
+			}
+			sql = sql.substring(0,sql.lastIndexOf(","));
+			noticeDao.executeSql(sql,null);
+		}
+		map.put(CloudConstant.SUCCESS, Boolean.valueOf(true));
+		map.put(CloudConstant.MESSAGE, "通知发布成功");
 		return map;
 	}
 }

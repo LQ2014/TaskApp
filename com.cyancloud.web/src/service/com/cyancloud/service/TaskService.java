@@ -108,4 +108,6 @@ public interface TaskService {
 	public List<TaskCopy> searchCopyTask(Long uid);
 
 	public Map<String, Object> searchNotice(Long uid, Long departmentId);
+
+	public Map<String, Object> publishNotice(Map<String, String> map) throws Exception;
 }

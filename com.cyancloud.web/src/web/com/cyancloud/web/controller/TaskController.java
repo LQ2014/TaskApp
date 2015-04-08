@@ -319,6 +319,26 @@ public class TaskController extends BaseAbstractController {
 		return result;
 	}
 	
+	@RequestMapping("/publishNotice.do")
+	@ResponseBody
+	public Object publishNotice(@RequestParam Long uid, @RequestParam Long departmentId,
+			HttpServletRequest request, HttpServletResponse response) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		try {
+			Map<String,String> map = new HashMap<String, String>();
+			map.put("unitIds", request.getParameter("unitIds"));
+			map.put("employeeIds", request.getParameter("employeeIds"));
+			map.put("title", request.getParameter("noticetilte"));
+			map.put("content", request.getParameter("content"));
+			map.put("flagIsPublished", request.getParameter("flagIsPublished"));
+			map.put("ucode", SessionAttributeNames.getUcode(request));
+			result = taskService.publishNotice(map);
+		} catch (Throwable e) {
+			setError(result, e.getMessage());
+		}
+		return result;
+	}
+	
 	
 	
 	@InitBinder
